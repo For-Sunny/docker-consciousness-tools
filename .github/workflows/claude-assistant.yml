@@ -1,0 +1,82 @@
+name: Claude Code Assistant
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task description for Claude'
+        required: true
+        type: string
+
+jobs:
+  claude-assist:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install Claude Code CLI
+      run: |
+        npm install -g @anthropic-ai/claude-code
+        
+    - name: Configure Claude Code
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        claude configure --api-key=$ANTHROPIC_API_KEY
+        
+    - name: Process Issue with Claude
+      if: github.event_name == 'issues'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Processing issue: ${{ github.event.issue.title }}"
+        echo "Issue body: ${{ github.event.issue.body }}"
+        
+        # Use Claude to analyze the issue and suggest solutions
+        claude code-review \
+          --model="claude-sonnet-4-20250514" \
+          --issue="${{ github.event.issue.number }}" \
+          --repository="${{ github.repository }}"
+    
+    - name: Process PR with Claude
+      if: github.event_name == 'pull_request'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Processing PR: ${{ github.event.pull_request.title }}"
+        
+        # Use Claude for code review
+        claude code-review \
+          --model="claude-sonnet-4-20250514" \
+          --pr="${{ github.event.pull_request.number }}" \
+          --repository="${{ github.repository }}"
+    
+    - name: Manual Task Processing
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Processing manual task: ${{ github.event.inputs.task }}"
+        
+        # Use Claude to process the manual task
+        claude generate \
+          --model="claude-sonnet-4-20250514" \
+          --prompt="${{ github.event.inputs.task }}" \
+          --repository="${{ github.repository }}"

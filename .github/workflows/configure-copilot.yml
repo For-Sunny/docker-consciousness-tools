@@ -1,0 +1,52 @@
+name: Configure Copilot for Claude Sonnet 4
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update Copilot configuration'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  configure-copilot:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup GitHub CLI
+      run: |
+        # Ensure gh is up to date
+        gh --version
+        
+    - name: Configure Copilot Model
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Checking current Copilot configuration..."
+        
+        # Note: GitHub CLI doesn't directly support Copilot model configuration yet
+        # This would need to be done through the web interface or API calls
+        
+        echo "To configure Claude Sonnet 4 in Copilot:"
+        echo "1. Go to https://github.com/settings/copilot"
+        echo "2. Find 'Model preferences' or 'AI model selection'"
+        echo "3. Select 'Claude Sonnet 4' from available models"
+        echo "4. Save the configuration"
+        
+        # Alternative: Use GitHub API to check current settings
+        echo "Current user settings:"
+        gh api user --include-organization
+        
+        # Check if there's a Copilot API endpoint available
+        echo "Checking available Copilot endpoints..."
+        gh api --method GET /user/copilot_settings 2>/dev/null || echo "Copilot settings API not available via CLI"
+    
+    - name: Verify Configuration
+      run: |
+        echo "Configuration steps completed."
+        echo "Please verify in VS Code that Claude Sonnet 4 is selected."
+        echo "Check: VS Code -> Settings -> GitHub Copilot -> Model"
